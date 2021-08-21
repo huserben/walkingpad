@@ -13,18 +13,11 @@ log = setup_logging()
 pad.logger = log
 ctler = Controller()
 
-last_status = None
-
-
-class WalkingPadData:
-    def __init__(self, steps, distance, time):
-        self.steps = steps
-
-        # Distance in km
-        self.distance = distance
-
-        # Time in seconds
-        self.time = time
+last_status = {
+    "steps": None,
+    "distance": None,
+    "time": None
+}
 
 
 def on_new_status(sender, record):
@@ -35,7 +28,9 @@ def on_new_status(sender, record):
     print('Time: {0} seconds'.format(record.time))
     print('Steps: {0}'.format(record.steps))
 
-    last_status = WalkingPadData(record.steps, distance_in_km, record.time)
+    last_status['steps'] = record.steps
+    last_status['distance'] = distance_in_km
+    last_status['time'] = record.time
 
     #print("Storing in DB...")
     #store_in_db(record.steps, distance_in_km, record.time)
@@ -134,7 +129,7 @@ async def get():
     finally:
         await disconnect()
 
-    return last_status, 200
+    return last_status
 
 
 ctler.handler_last_status = on_new_status
