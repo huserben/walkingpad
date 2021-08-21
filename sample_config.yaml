@@ -1,0 +1,7 @@
+address: 57:4C:4E:27:23:DB
+database:
+  host: 192.168.1.235
+  port: 5432
+  dbname: "exercise"
+  user: dbUserName
+  password: dbPassword

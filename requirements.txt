@@ -1,0 +1,4 @@
+asyncio
+pyyaml
+psycopg2-binary
+ph4_walkingpad

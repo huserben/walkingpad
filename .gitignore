@@ -1,0 +1,15 @@
+.idea
+*.pyc
+dist
+bin
+*.egg-info
+Virtualenv
+build
+venv
+.ipynb_checkpoints
+profile.json
+profile.json.*
+profile-a*.json*
+account-data.json
+
+config.yaml
