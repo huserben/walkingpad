@@ -137,6 +137,7 @@ async def finish_walk():
     try:
         await connect()
         await ctler.switch_mode(WalkingPad.MODE_STANDBY)
+        await asyncio.sleep(1.0)
         await ctler.ask_hist(0)
         await asyncio.sleep(1.0)
         store_in_db(last_status['steps'], last_status['distance'], last_status['time'])
