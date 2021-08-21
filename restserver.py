@@ -32,9 +32,6 @@ def on_new_status(sender, record):
     last_status['distance'] = distance_in_km
     last_status['time'] = record.time
 
-    #print("Storing in DB...")
-    #store_in_db(record.steps, distance_in_km, record.time)
-
 
 def store_in_db(steps, distance_in_km, duration_in_seconds):
     try:
@@ -120,7 +117,7 @@ async def change_pad_mode():
 
 
 @app.route("/history", methods=['GET'])
-async def get():
+async def get_history():
     try:
         await connect()
 
@@ -131,6 +128,10 @@ async def get():
 
     return last_status
 
+@app.route("/store", methods=['POST'])
+def store():
+    store_in_db(last_status['steps'], last_status['distance'], last_status['time'])
+    
 
 ctler.handler_last_status = on_new_status
 
