@@ -31,4 +31,7 @@ TODO Insert IMAGE HERE
 The connection settings are read from a config file. Rename the existing *sample_config.yaml* to *config.yaml* and change the *address* to the Mac Address you just read.
 
 ## Testing Connection
-Once you've added the proper mac address you can test out whether it works. Open the Swagger API on http://*ServerIP*:5678 and try to set the mode to Manual or Standby. If the status is changing on your WalkingPad you're good to go.
+Once you've added the proper mac address you can test out whether it works.
+Execute a `POST` request to *http://<ServerIP>:5678/mode?new_mode=manual* - this should change the pad from Standby to Manual mode. To switch it back to standby, run *http://<ServerIP>:5678/mode?new_mode=standby*.
+
+If the status is changing on your WalkingPad you're good to go.

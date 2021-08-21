@@ -1,5 +1,4 @@
-from flask import Flask, request, abort
-from flask_restplus import Api, Resource
+from flask import Flask, request
 from ph4_walkingpad import pad
 from ph4_walkingpad.pad import WalkingPad, Controller
 from ph4_walkingpad.utils import setup_logging
@@ -8,9 +7,7 @@ import yaml
 import psycopg2
 from datetime import date
 
-flask_app = Flask(__name__)
-app = Api(app=flask_app)
-name_space = app.namespace('', description='WalkingPad API')
+app = Flask(__name__)
 
 log = setup_logging()
 pad.logger = log
@@ -18,15 +15,17 @@ ctler = Controller()
 
 last_status = None
 
+
 class WalkingPadData:
     def __init__(self, steps, distance, time):
         self.steps = steps
-        
+
         # Distance in km
-        self.distance = distance        
-        
+        self.distance = distance
+
         # Time in seconds
         self.time = time
+
 
 def on_new_status(sender, record):
 
@@ -35,7 +34,7 @@ def on_new_status(sender, record):
     print('Distance: {0}km'.format(distance_in_km))
     print('Time: {0} seconds'.format(record.time))
     print('Steps: {0}'.format(record.steps))
-    
+
     last_status = WalkingPadData(record.steps, distance_in_km, record.time)
 
     #print("Storing in DB...")
@@ -86,77 +85,59 @@ async def disconnect():
     await asyncio.sleep(1.0)
 
 
-@name_space.route("/config/address", methods=['GET', 'POST'])
-class ConfigAddress(Resource):
-    @name_space.doc(responses={200: "Currently set bluetooth address of WalkingPad"})
-    def get(self):
-        config = load_config()
-        return str(config['address']), 200
-
-    @name_space.doc(
-        params={'address': "The bluetooth mac address of the walking pad"},
-        responses={
-            202: "Saves new address"
-        })
-    def post(self):
-        address = request.args.get('address')
-        config = load_config()
-        config['address'] = address
-        save_config(config)
-
-        return self.get()
+@app.route("/config/address", methods=['GET'])
+def get_config_address():
+    config = load_config()
+    return str(config['address']), 200
 
 
-@name_space.route("/walkingpad/mode", methods=['POST'])
-class WalkingPadMode(Resource):
-    @name_space.doc(
-        params={'mode': "Standby or Manual"},
-        responses={
-            200: "WalkingPad Mode changed",
-            404: "Specified Mode not supported"
-        })
-    async def post(self):
-        mode = request.args.get('mode')
-        print("Got mode {0}".format(mode))
+@app.route("/config/address", methods=['POST'])
+def set_config_address():
+    address = request.args.get('address')
+    config = load_config()
+    config['address'] = address
+    save_config(config)
 
-        pad_mode = None
-        if (mode.lower() == "standby"):
-            pad_mode = WalkingPad.MODE_STANDBY
-        elif (mode.lower() == "manual"):
-            pad_mode = WalkingPad.MODE_MANUAL
-        else:
-            return "Mode {0} is not supported".format(mode), 404
-
-        try:
-            await connect()
-
-            await ctler.switch_mode(pad_mode)
-            await asyncio.sleep(1.0)
-        finally:
-            await disconnect()
-
-        return str(pad_mode), 200
+    return get_config_address()
 
 
-@name_space.route("/walkingpad/history", methods=['GET'])
-class WalkingPadDataCollector(Resource):
-    @name_space.doc(
-        responses={
-            200: "Last WalkingPad History Record"
-        }
-    )
-    async def get(self):
-        try:
-            await connect()
-            
-            await ctler.ask_hist(0)
-            await asyncio.sleep(1.0)
-        finally:
-            await disconnect()
-            
-        return last_status, 200
+@app.route("/mode", methods=['POST'])
+async def change_pad_mode():
+    new_mode = request.args.get('new_mode')
+    print("Got mode {0}".format(new_mode))
+
+    if (new_mode.lower() == "standby"):
+        pad_mode = WalkingPad.MODE_STANDBY
+    elif (new_mode.lower() == "manual"):
+        pad_mode = WalkingPad.MODE_MANUAL
+    else:
+        return "Mode {0} not supported".format(new_mode), 400
+
+    try:
+        await connect()
+
+        await ctler.switch_mode(pad_mode)
+        await asyncio.sleep(1.0)
+    finally:
+        await disconnect()
+    
+    return new_mode
+
+
+@app.route("/history", methods=['GET'])
+async def get():
+    try:
+        await connect()
+
+        await ctler.ask_hist(0)
+        await asyncio.sleep(1.0)
+    finally:
+        await disconnect()
+
+    return last_status, 200
+
 
 ctler.handler_last_status = on_new_status
 
 if __name__ == '__main__':
-    flask_app.run(debug=True, host='0.0.0.0', port=5678)
+    app.run(debug=True, host='0.0.0.0', port=5678)

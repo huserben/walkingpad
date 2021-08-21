@@ -2,6 +2,4 @@ asyncio
 pyyaml
 psycopg2-binary
 ph4_walkingpad
-Flask
-flask_restplus
-werkzeug==0.16.1
+Flask[async]
