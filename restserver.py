@@ -36,7 +36,7 @@ def on_new_status(sender, record):
     print('Time: {0} seconds'.format(record.time))
     print('Steps: {0}'.format(record.steps))
     
-    last_status = WalkingPadData(record.steps, distance_in_km, record.time }
+    last_status = WalkingPadData(record.steps, distance_in_km, record.time)
 
     #print("Storing in DB...")
     #store_in_db(record.steps, distance_in_km, record.time)
