@@ -128,10 +128,23 @@ async def get_history():
 
     return last_status
 
-@app.route("/store", methods=['POST'])
-def store():
+@app.route("/save", methods=['POST'])
+def save():
     store_in_db(last_status['steps'], last_status['distance'], last_status['time'])
     
+@app.route("/finishwalk", methods=['POST'])
+async def finish_walk():
+    try:
+        await connect()
+        await ctler.switch_mode(WalkingPad.MODE_STANDBY)
+        await ctler.ask_hist(0)
+        await asyncio.sleep(1.0)
+        store_in_db(last_status['steps'], last_status['distance'], last_status['time'])
+    finally:
+        await disconnect()
+
+    return last_status
+
 
 ctler.handler_last_status = on_new_status
 
