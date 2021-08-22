@@ -26,7 +26,7 @@ You need bluetooth to connect to the WalkingPad, so make sure to execute the app
 
 In order to connect to the WalkingPad you need to know the MacAddress of it. To figure this out just run the *scan.py* script. This will scan for nearby devices. You should see a device named "WalkingPad":
 
-TODO Insert IMAGE HERE
+![Scanning for Devices](https://raw.githubusercontent.com/huserben/walkingpad/main/Images/scan.jpg)
 
 The connection settings are read from a config file. Rename the existing *sample_config.yaml* to *config.yaml* and change the *address* to the Mac Address you just read.
 
