@@ -35,3 +35,10 @@ Once you've added the proper mac address you can test out whether it works.
 Execute a `POST` request to *http://<ServerIP>:5678/mode?new_mode=manual* - this should change the pad from Standby to Manual mode. To switch it back to standby, run *http://<ServerIP>:5678/mode?new_mode=standby*.
 
 If the status is changing on your WalkingPad you're good to go.
+
+# Acknowledgements
+
+Thank you goes to all of the following people, who contributed feedback, bug reports, code submissions, testing, reviews or any kind of input.
+  
+  - [Peter Wynands](https://peter-wynands.medium.com/1000-km-behind-my-desk-87ab44b4067c) for sharing his blog post about the WalkingPad
+  - [@pedropombeiro](https://github.com/pedropombeiro) for extending the functionality of the API

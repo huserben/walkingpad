@@ -34,8 +34,11 @@ def on_new_status(sender, record):
 
 
 def store_in_db(steps, distance_in_km, duration_in_seconds):
+    db_config = load_config()['database']
+    if not db_config['host']:
+        return
+
     try:
-        db_config = load_config()['database']
         conn = psycopg2.connect(host=db_config['host'], port=db_config['port'],
                                 dbname=db_config['dbname'], user=db_config['user'], password=db_config['password'])
         cur = conn.cursor()
@@ -69,12 +72,12 @@ async def connect():
     address = load_config()['address']
     print("Connecting to {0}".format(address))
     await ctler.run(address)
-    await asyncio.sleep(1.0)
+    await asyncio.sleep(ctler.minimal_cmd_space)
 
 
 async def disconnect():
     await ctler.disconnect()
-    await asyncio.sleep(1.0)
+    await asyncio.sleep(ctler.minimal_cmd_space)
 
 
 @app.route("/config/address", methods=['GET'])
@@ -93,6 +96,29 @@ def set_config_address():
     return get_config_address()
 
 
+@app.route("/mode", methods=['GET'])
+async def get_pad_mode():
+    try:
+        await connect()
+
+        await ctler.ask_stats()
+        await asyncio.sleep(ctler.minimal_cmd_space)
+        stats = ctler.last_status
+        mode = stats.manual_mode
+
+        if (mode == WalkingPad.MODE_STANDBY):
+            return "standby"
+        elif (mode == WalkingPad.MODE_MANUAL):
+            return "manual"
+        elif (mode == WalkingPad.MODE_AUTOMAT):
+            return "auto"
+        else:
+            return "Mode {0} not supported".format(mode), 400
+    finally:
+        await disconnect()
+
+    return "Error", 500
+
 @app.route("/mode", methods=['POST'])
 async def change_pad_mode():
     new_mode = request.args.get('new_mode')
@@ -102,6 +128,8 @@ async def change_pad_mode():
         pad_mode = WalkingPad.MODE_STANDBY
     elif (new_mode.lower() == "manual"):
         pad_mode = WalkingPad.MODE_MANUAL
+    elif (new_mode.lower() == "auto"):
+        pad_mode = WalkingPad.MODE_AUTOMAT
     else:
         return "Mode {0} not supported".format(new_mode), 400
 
@@ -109,11 +137,47 @@ async def change_pad_mode():
         await connect()
 
         await ctler.switch_mode(pad_mode)
-        await asyncio.sleep(1.0)
+        await asyncio.sleep(ctler.minimal_cmd_space)
     finally:
         await disconnect()
-    
+
     return new_mode
+
+@app.route("/status", methods=['GET'])
+async def get_status():
+    try:
+        await connect()
+
+        await ctler.ask_stats()
+        await asyncio.sleep(ctler.minimal_cmd_space)
+        stats = ctler.last_status
+        mode = stats.manual_mode
+        belt_state = stats.belt_state
+
+        if (mode == WalkingPad.MODE_STANDBY):
+            mode = "standby"
+        elif (mode == WalkingPad.MODE_MANUAL):
+            mode = "manual"
+        elif (mode == WalkingPad.MODE_AUTOMAT):
+            mode = "auto"
+
+        if (belt_state == 5):
+            belt_state = "standby"
+        elif (belt_state == 0):
+            belt_state = "idle"
+        elif (belt_state == 1):
+            belt_state = "running"
+        elif (belt_state >=7):
+            belt_state = "starting"
+
+        dist = stats.dist / 100
+        time = stats.time
+        steps = stats.steps
+        speed = stats.speed / 10
+
+        return { "dist": dist, "time": time, "steps": steps, "speed": speed, "belt_state": belt_state }
+    finally:
+        await disconnect()
 
 
 @app.route("/history", methods=['GET'])
@@ -122,7 +186,7 @@ async def get_history():
         await connect()
 
         await ctler.ask_hist(0)
-        await asyncio.sleep(1.0)
+        await asyncio.sleep(ctler.minimal_cmd_space)
     finally:
         await disconnect()
 
@@ -131,15 +195,31 @@ async def get_history():
 @app.route("/save", methods=['POST'])
 def save():
     store_in_db(last_status['steps'], last_status['distance'], last_status['time'])
-    
+
+@app.route("/startwalk", methods=['POST'])
+async def start_walk():
+    try:
+        await connect()
+        await ctler.switch_mode(WalkingPad.MODE_STANDBY) # Ensure we start from a known state, since start_belt is actually toggle_belt
+        await asyncio.sleep(ctler.minimal_cmd_space)
+        await ctler.switch_mode(WalkingPad.MODE_MANUAL)
+        await asyncio.sleep(ctler.minimal_cmd_space)
+        await ctler.start_belt()
+        await asyncio.sleep(ctler.minimal_cmd_space)
+        await ctler.ask_hist(0)
+        await asyncio.sleep(ctler.minimal_cmd_space)
+    finally:
+        await disconnect()
+    return last_status
+
 @app.route("/finishwalk", methods=['POST'])
 async def finish_walk():
     try:
         await connect()
         await ctler.switch_mode(WalkingPad.MODE_STANDBY)
-        await asyncio.sleep(1.0)
+        await asyncio.sleep(ctler.minimal_cmd_space)
         await ctler.ask_hist(0)
-        await asyncio.sleep(1.0)
+        await asyncio.sleep(ctler.minimal_cmd_space)
         store_in_db(last_status['steps'], last_status['distance'], last_status['time'])
     finally:
         await disconnect()
@@ -150,4 +230,4 @@ async def finish_walk():
 ctler.handler_last_status = on_new_status
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5678)
+    app.run(debug=True, host='0.0.0.0', port=5678, processes=1, threaded=False)
