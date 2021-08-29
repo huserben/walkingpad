@@ -93,6 +93,29 @@ def set_config_address():
     return get_config_address()
 
 
+@app.route("/mode", methods=['GET'])
+async def get_pad_mode():
+    try:
+        await connect()
+
+        await ctler.ask_stats()
+        await asyncio.sleep(ctler.minimal_cmd_space)
+        stats = ctler.last_status
+        mode = stats.manual_mode
+
+        if (mode == WalkingPad.MODE_STANDBY):
+            return "standby"
+        elif (mode == WalkingPad.MODE_MANUAL):
+            return "manual"
+        elif (mode == WalkingPad.MODE_AUTOMAT):
+            return "auto"
+        else:
+            return "Mode {0} not supported".format(mode), 400
+    finally:
+        await disconnect()
+
+    return "Error", 500
+
 @app.route("/mode", methods=['POST'])
 async def change_pad_mode():
     new_mode = request.args.get('new_mode')
@@ -102,6 +125,8 @@ async def change_pad_mode():
         pad_mode = WalkingPad.MODE_STANDBY
     elif (new_mode.lower() == "manual"):
         pad_mode = WalkingPad.MODE_MANUAL
+    elif (new_mode.lower() == "auto"):
+        pad_mode = WalkingPad.MODE_AUTOMAT
     else:
         return "Mode {0} not supported".format(new_mode), 400
 
