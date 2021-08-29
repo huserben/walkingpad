@@ -115,6 +115,42 @@ async def change_pad_mode():
     
     return new_mode
 
+@app.route("/status", methods=['GET'])
+async def get_status():
+    try:
+        await connect()
+
+        await ctler.ask_stats()
+        await asyncio.sleep(ctler.minimal_cmd_space)
+        stats = ctler.last_status
+        mode = stats.manual_mode
+        belt_state = stats.belt_state
+
+        if (mode == WalkingPad.MODE_STANDBY):
+            mode = "standby"
+        elif (mode == WalkingPad.MODE_MANUAL):
+            mode = "manual"
+        elif (mode == WalkingPad.MODE_AUTOMAT):
+            mode = "auto"
+
+        if (belt_state == 5):
+            belt_state = "standby"
+        elif (belt_state == 0):
+            belt_state = "idle"
+        elif (belt_state == 1):
+            belt_state = "running"
+        elif (belt_state >=7):
+            belt_state = "starting"
+
+        dist = stats.dist / 100
+        time = stats.time
+        steps = stats.steps
+        speed = stats.speed / 10
+
+        return { "dist": dist, "time": time, "steps": steps, "speed": speed, "belt_state": belt_state }
+    finally:
+        await disconnect()
+
 
 @app.route("/history", methods=['GET'])
 async def get_history():
