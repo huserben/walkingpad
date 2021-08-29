@@ -69,12 +69,12 @@ async def connect():
     address = load_config()['address']
     print("Connecting to {0}".format(address))
     await ctler.run(address)
-    await asyncio.sleep(1.0)
+    await asyncio.sleep(ctler.minimal_cmd_space)
 
 
 async def disconnect():
     await ctler.disconnect()
-    await asyncio.sleep(1.0)
+    await asyncio.sleep(ctler.minimal_cmd_space)
 
 
 @app.route("/config/address", methods=['GET'])
@@ -109,7 +109,7 @@ async def change_pad_mode():
         await connect()
 
         await ctler.switch_mode(pad_mode)
-        await asyncio.sleep(1.0)
+        await asyncio.sleep(ctler.minimal_cmd_space)
     finally:
         await disconnect()
     
@@ -122,7 +122,7 @@ async def get_history():
         await connect()
 
         await ctler.ask_hist(0)
-        await asyncio.sleep(1.0)
+        await asyncio.sleep(ctler.minimal_cmd_space)
     finally:
         await disconnect()
 
@@ -137,9 +137,9 @@ async def finish_walk():
     try:
         await connect()
         await ctler.switch_mode(WalkingPad.MODE_STANDBY)
-        await asyncio.sleep(1.0)
+        await asyncio.sleep(ctler.minimal_cmd_space)
         await ctler.ask_hist(0)
-        await asyncio.sleep(1.0)
+        await asyncio.sleep(ctler.minimal_cmd_space)
         store_in_db(last_status['steps'], last_status['distance'], last_status['time'])
     finally:
         await disconnect()
