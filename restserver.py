@@ -9,6 +9,10 @@ from datetime import date
 
 app = Flask(__name__)
 
+# minimal_cmd_space does not exist in the version we use from pip, thus we define it here.
+# This should be removed once we can take it from the controller
+minimal_cmd_space = 0.69
+
 log = setup_logging()
 pad.logger = log
 ctler = Controller()
@@ -72,12 +76,12 @@ async def connect():
     address = load_config()['address']
     print("Connecting to {0}".format(address))
     await ctler.run(address)
-    await asyncio.sleep(ctler.minimal_cmd_space)
+    await asyncio.sleep(minimal_cmd_space)
 
 
 async def disconnect():
     await ctler.disconnect()
-    await asyncio.sleep(ctler.minimal_cmd_space)
+    await asyncio.sleep(minimal_cmd_space)
 
 
 @app.route("/config/address", methods=['GET'])
@@ -102,7 +106,7 @@ async def get_pad_mode():
         await connect()
 
         await ctler.ask_stats()
-        await asyncio.sleep(ctler.minimal_cmd_space)
+        await asyncio.sleep(minimal_cmd_space)
         stats = ctler.last_status
         mode = stats.manual_mode
 
@@ -137,7 +141,7 @@ async def change_pad_mode():
         await connect()
 
         await ctler.switch_mode(pad_mode)
-        await asyncio.sleep(ctler.minimal_cmd_space)
+        await asyncio.sleep(minimal_cmd_space)
     finally:
         await disconnect()
 
@@ -149,7 +153,7 @@ async def get_status():
         await connect()
 
         await ctler.ask_stats()
-        await asyncio.sleep(ctler.minimal_cmd_space)
+        await asyncio.sleep(minimal_cmd_space)
         stats = ctler.last_status
         mode = stats.manual_mode
         belt_state = stats.belt_state
@@ -186,7 +190,7 @@ async def get_history():
         await connect()
 
         await ctler.ask_hist(0)
-        await asyncio.sleep(ctler.minimal_cmd_space)
+        await asyncio.sleep(minimal_cmd_space)
     finally:
         await disconnect()
 
@@ -201,13 +205,13 @@ async def start_walk():
     try:
         await connect()
         await ctler.switch_mode(WalkingPad.MODE_STANDBY) # Ensure we start from a known state, since start_belt is actually toggle_belt
-        await asyncio.sleep(ctler.minimal_cmd_space)
+        await asyncio.sleep(minimal_cmd_space)
         await ctler.switch_mode(WalkingPad.MODE_MANUAL)
-        await asyncio.sleep(ctler.minimal_cmd_space)
+        await asyncio.sleep(minimal_cmd_space)
         await ctler.start_belt()
-        await asyncio.sleep(ctler.minimal_cmd_space)
+        await asyncio.sleep(minimal_cmd_space)
         await ctler.ask_hist(0)
-        await asyncio.sleep(ctler.minimal_cmd_space)
+        await asyncio.sleep(minimal_cmd_space)
     finally:
         await disconnect()
     return last_status
@@ -217,9 +221,9 @@ async def finish_walk():
     try:
         await connect()
         await ctler.switch_mode(WalkingPad.MODE_STANDBY)
-        await asyncio.sleep(ctler.minimal_cmd_space)
+        await asyncio.sleep(minimal_cmd_space)
         await ctler.ask_hist(0)
-        await asyncio.sleep(ctler.minimal_cmd_space)
+        await asyncio.sleep(minimal_cmd_space)
         store_in_db(last_status['steps'], last_status['distance'], last_status['time'])
     finally:
         await disconnect()
