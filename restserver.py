@@ -115,7 +115,7 @@ async def change_pad_mode():
         await asyncio.sleep(1.0)
     finally:
         await disconnect()
-    
+
     return new_mode
 
 @app.route("/status", methods=['GET'])
@@ -170,7 +170,23 @@ async def get_history():
 @app.route("/save", methods=['POST'])
 def save():
     store_in_db(last_status['steps'], last_status['distance'], last_status['time'])
-    
+
+@app.route("/startwalk", methods=['POST'])
+async def start_walk():
+    try:
+        await connect()
+        await ctler.switch_mode(WalkingPad.MODE_STANDBY) # Ensure we start from a known state, since start_belt is actually toggle_belt
+        await asyncio.sleep(ctler.minimal_cmd_space)
+        await ctler.switch_mode(WalkingPad.MODE_MANUAL)
+        await asyncio.sleep(ctler.minimal_cmd_space)
+        await ctler.start_belt()
+        await asyncio.sleep(ctler.minimal_cmd_space)
+        await ctler.ask_hist(0)
+        await asyncio.sleep(ctler.minimal_cmd_space)
+    finally:
+        await disconnect()
+    return last_status
+
 @app.route("/finishwalk", methods=['POST'])
 async def finish_walk():
     try:
