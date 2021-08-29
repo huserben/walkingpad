@@ -34,8 +34,11 @@ def on_new_status(sender, record):
 
 
 def store_in_db(steps, distance_in_km, duration_in_seconds):
+    db_config = load_config()['database']
+    if not db_config['host']:
+        return
+
     try:
-        db_config = load_config()['database']
         conn = psycopg2.connect(host=db_config['host'], port=db_config['port'],
                                 dbname=db_config['dbname'], user=db_config['user'], password=db_config['password'])
         cur = conn.cursor()
