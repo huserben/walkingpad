@@ -6,6 +6,7 @@ bin
 Virtualenv
 build
 venv
+.venv
 .ipynb_checkpoints
 profile.json
 profile.json.*
