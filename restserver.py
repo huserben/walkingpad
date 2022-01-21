@@ -216,6 +216,26 @@ async def start_walk():
         await disconnect()
     return last_status
 
+@app.route("/turbo", methods=['POST'])
+async def start_walk():
+    try:
+        await connect()
+        await ctler.change_speed(6.0)
+        await asyncio.sleep(minimal_cmd_space)
+    finally:
+        await disconnect()
+    return last_status
+
+@app.route("/normal", methods=['POST'])
+async def start_walk():
+    try:
+        await connect()
+        await ctler.change_speed(2.0)
+        await asyncio.sleep(minimal_cmd_space)
+    finally:
+        await disconnect()
+    return last_status
+
 @app.route("/finishwalk", methods=['POST'])
 async def finish_walk():
     try:
