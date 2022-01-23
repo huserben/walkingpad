@@ -12,6 +12,9 @@ This can be used then as a source for visualizing, for example in a Grafana Dash
 
 The REST API can easily be extended, for more details on actions that can be done check the [ph4-walkingpad controller](https://github.com/ph4r05/ph4-walkingpad) repo.
 
+## Limitations
+Currently the REST API does not seem to work on OSX Monterrey. Check [this issue](https://github.com/huserben/walkingpad/issues/7#issuecomment-1019125291) for updates on the topic.
+
 ## Run Server
 Install dependencies:
 `python -m pip install --no-cache-dir -r requirements.txt`
